@@ -4,7 +4,6 @@ from typing import Dict, List, Set, Tuple
 import cv2
 import numpy as np
 from cellpose import models
-from cellpose.contrib import openvino_utils
 from vpt_core.io.image import ImageSet
 
 from vpt_plugin_cellpose2 import CellposeSegParameters, CellposeSegProperties
@@ -47,11 +46,9 @@ def extract_masks_with_cellpose(
     mask the same where zero is background and each label is a segmentation object.
     """
     if properties.custom_weights:
-        model = models.CellposeModel(gpu=False, pretrained_model=properties.custom_weights, net_avg=False)
+        model = models.CellposeModel(gpu=False, pretrained_model=properties.custom_weights)
     else:
-        model = models.CellposeModel(gpu=False, model_type=properties.model, net_avg=False)
-
-    model = openvino_utils.to_openvino(model)
+        model = models.CellposeModel(gpu=False, model_type=properties.model)
 
     mask = model.eval(
         image[to_segment_z, ...],
@@ -63,7 +60,6 @@ def extract_masks_with_cellpose(
         cellprob_threshold=parameters.cellprob_threshold,
         resample=False,
         min_size=parameters.minimum_mask_size,
-        tile=True,
         do_3D=(properties.model_dimensions == "3D"),
     )[0]
     mask = mask.reshape((len(to_segment_z),) + image.shape[1:-1])
@@ -97,8 +93,9 @@ def convert_imageset_to_rgb_image(images: ImageSet, channel_map: Dict) -> np.nda
 
     # Iterate through each color and extract if from the ImageSet. If necessary, pad the image for OpenCV compatibility
     for image_color in image_data:
-        if channel_map.get(image_color) and channel_map[image_color].strip():
-            channel = channel_map[image_color].strip()
+        channel_value = channel_map.get(image_color)
+        if channel_value and channel_value.strip():
+            channel = channel_value.strip()
             image_data[image_color] = images.as_stack([channel])[..., 0]
             if any(x > 0 for x in image_data[image_color].shape):
                 if any([dim < MINIMUM_IMAGE_SIZE_OPENCV for dim in image_data[image_color].shape[1:]]):
