@@ -25,7 +25,7 @@ packages = [{ include = "vpt_plugin_cellpose2*", from = "src" }]
 
 [tool.poetry.dependencies]
 python = ">=3.10,<3.13"
-cellpose = ">=4.0.9,<5.0.0"
+cellpose = ">=2,<2.2.4"
 aiohttp = ">=3.9.3,<4.0.0"
 fastremap = ">=1.18.0,<2.0.0"
 fsspec = "2024.2.0"
