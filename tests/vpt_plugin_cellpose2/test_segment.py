@@ -1,10 +1,13 @@
 import json
 from typing import Dict
 
+import pytest
+
 from vpt_core.segmentation.seg_result import SegmentationResult
 
 from tests.vpt_plugin_cellpose2 import TEST_DATA_ROOT
-from tests.vpt_plugin_cellpose2.test_predict import Circle, generate_images
+from tests.vpt_plugin_cellpose2.test_predict import Circle, FakeCellposeModel, generate_images
+from vpt_plugin_cellpose2 import predict
 from vpt_plugin_cellpose2.segment import SegmentationMethod
 
 
@@ -28,16 +31,19 @@ def test_segment_validation() -> None:
         pass
 
 
-def test_segment_run() -> None:
+def test_segment_run(monkeypatch: pytest.MonkeyPatch) -> None:
     method = SegmentationMethod()
     task = get_test_task("cellpose.json")
     cells = [Circle(20, 15, 10), Circle(30, 100, 10), Circle(100, 20, 15), Circle(210, 100, 15)]
+    monkeypatch.setattr(predict.models, "CellposeModel", FakeCellposeModel)
+    images, _, _ = generate_images(513, cells)
+
     seg_res = method.run_segmentation(
         segmentation_properties=task["segmentation_properties"],
         segmentation_parameters=task["segmentation_parameters"],
         polygon_parameters=task["polygon_parameters"],
         result=["cell"],
-        images=generate_images(513, cells),
+        images=images,
     )
     for _, z_seg in seg_res.df.groupby(SegmentationResult.z_index_field):
-        assert len(z_seg) > 0
+        assert len(z_seg) == 2

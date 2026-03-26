@@ -52,7 +52,7 @@ class SegmentationMethod(SegmentationBase):
             raise ValueError(f"{fill_channel} is not in input channels")
 
         for color, chan in channel_map.items():
-            if chan.lower() not in channels and chan.strip():
+            if chan and chan.strip() and chan.lower() not in channels:
                 raise ValueError(f"{chan} is not in input channels")
 
         if not model and not custom_model:
